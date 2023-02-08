@@ -1,0 +1,19 @@
+spring:
+    jpa:
+        database-platform: org.hibernate.dialect.MySQL8Dialect
+        show-sql: true
+        hibernate:
+            format_sql: true
+            ddl-auto: update
+    datasource:
+        url: jdbc:mysql://localhost:3306/elvin_restful_emp_managment?autoReconnect=true&useSSL=false
+        username: root
+        password: root
+        driverClassName: com.mysql.cj.jdbc.Driver
+
+my:
+    message:
+        body: "Please confirm your registration url: "
+        subject: "Registration Confirm Link"
+        forget-subject: "Password Confirmation Code"
+        forget-body: "Your password confirmation code link: "
