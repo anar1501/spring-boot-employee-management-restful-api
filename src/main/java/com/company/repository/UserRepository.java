@@ -3,8 +3,9 @@ package com.company.repository;
 import com.company.model.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface UserRepository extends JpaRepository<User,Long> {
-    Boolean existsByUsername(String username);
+import java.util.Optional;
 
-    Boolean existsByEmail(String email);
+public interface UserRepository extends JpaRepository<User,Long> {
+    Boolean existsByEmailorusername(String username);
+    Optional<User> findUserByEmailorusername(String emailOrUsername);
 }

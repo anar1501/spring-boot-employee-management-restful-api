@@ -22,11 +22,9 @@ public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     Long id;
-    @Column(unique = true)
-    private String username;
+    @Column(unique = true,nullable = false)
+    private String emailorusername;
     private String password;
-    @Column(unique = true)
-    private String email;
     private String activationCode;
     private Date expiredDate;
     @Column(length = 6)

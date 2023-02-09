@@ -1,13 +1,15 @@
 package com.company.mapstruct;
 
 
-import com.company.config.SwaggerConfig;
 import com.company.dto.request.RegisterRequestDto;
 import com.company.model.User;
 import com.company.repository.RoleRepository;
 import com.company.utils.DateUtil;
 import org.mapstruct.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.Objects;
 
@@ -17,7 +19,7 @@ import static com.company.enums.RoleEnums.ROLE_USER;
 public abstract class UserMapper {
 
     @Autowired
-    protected SwaggerConfig swaggerConfig;
+    protected PasswordEncoder passwordEncoder;
 
     @Autowired
     protected RoleRepository roleRepository;
@@ -33,8 +35,7 @@ public abstract class UserMapper {
 
     @Named(value = "toPassword")
     protected String toPassword(String password){
-        String encode = swaggerConfig.passwordEncoder().encode(password);
-        return encode;
+        return passwordEncoder.encode(password);
     }
 
     @AfterMapping

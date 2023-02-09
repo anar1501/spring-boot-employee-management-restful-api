@@ -6,8 +6,7 @@ import lombok.experimental.FieldDefaults;
 
 @Data
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class RegisterRequestDto {
-    String emailorusername;
+public class LoginRequestDto {
+    String emailOrUsername;
     String password;
-    String repeatPassword;
 }
