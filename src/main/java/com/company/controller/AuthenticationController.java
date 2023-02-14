@@ -4,27 +4,23 @@ import com.company.dto.request.LoginRequestDto;
 import com.company.dto.request.RegisterRequestDto;
 import com.company.dto.response.JWTAuthResponse;
 import com.company.enums.UserStatusEnum;
-import com.company.exception.EmailOrUsernameNotFoundException;
-import com.company.exception.UnconfirmedException;
-import com.company.exception.WrongPasswordException;
+import com.company.exception.*;
 import com.company.mapstruct.UserMapper;
 import com.company.model.User;
 import com.company.repository.UserRepository;
+import com.company.repository.UserStatusRepository;
 import com.company.security.jwt.JwtUtil;
 import com.company.service.UserService;
 import com.company.utils.MessageUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Date;
 
 @RestController
 @RequestMapping(value = "/api/v1/auth")
@@ -38,6 +34,7 @@ public class AuthenticationController {
     final MessageUtils messageUtils;
     final AuthenticationManager authenticationManager;
     final JwtUtil jwtUtil;
+    final UserStatusRepository userStatusRepository;
     @Value("${my.message.subject}")
     String messageSubject;
     @Value("${my.message.body}")
@@ -46,6 +43,7 @@ public class AuthenticationController {
     String forgetMessageSubject;
     @Value("${my.message.forget-body}")
     String forgetMessageBody;
+    private final static Date currentDate = new Date();
 
 
     @PostMapping(value = "/register")
@@ -55,20 +53,23 @@ public class AuthenticationController {
     }
 
     @PostMapping(value = "/login")
-    public JWTAuthResponse login(@RequestBody LoginRequestDto requestDto) {
-        User user = userRepository.findUserByEmailorusername(requestDto.getEmailOrUsername())
-                .orElseThrow(EmailOrUsernameNotFoundException::new);
-        boolean isMatches = passwordEncoder.matches(requestDto.getPassword(), user.getPassword());
-        if (!isMatches) {
-            throw new WrongPasswordException();
+    public ResponseEntity<JWTAuthResponse> login(@RequestBody LoginRequestDto requestDto) {
+        return ResponseEntity.ok(userService.login(requestDto));
+    }
+
+    @GetMapping(value = "/register-confirm")
+    public void registerConfirm(@RequestParam(value = "code") String code) {
+        User user = userRepository.findUserByActivationCode(code);
+        if (user.getStatus().getId().equals(UserStatusEnum.CONFIRMED.getStatusId())) {
+            throw new UserAlreadyConfirmedException();
         }
-        boolean isConfirmed = user.getStatus().getId().equals(UserStatusEnum.UNCONFIRMED.getStatusId());
-        if (isConfirmed) {
-            throw new UnconfirmedException();
+        Date expiredDate = user.getExpiredDate();
+        if (expiredDate.before(currentDate)) {
+            throw new ExpirationCodeIsExpiredException();
+        } else {
+            user.setStatus(userStatusRepository.findUserStatusById(UserStatusEnum.CONFIRMED.getStatusId()));
+            userRepository.save(user);
         }
-        Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(requestDto.getEmailOrUsername(), requestDto.getPassword()));
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-        return new JWTAuthResponse(jwtUtil.generateToken(authentication));
     }
 
 }
